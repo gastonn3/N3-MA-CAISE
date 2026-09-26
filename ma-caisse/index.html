@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="description" content="MA CAISSE V1.4 - Solution numérique de gestion de commerce pour petits commerçants et entrepreneurs par Gaston N3">
+  <title>MA CAISSE — Gestion de Commerce</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Layout Principal -->
+  <div class="app-layout">
+    
+    <!-- Barre Latérale (Sidebar) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">MC</div>
+        <div class="brand-text">
+          <h1>MA CAISSE</h1>
+          <span>Gestion de commerce</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-view="dashboard" onclick="App.navigateTo('dashboard')">
+          <span class="nav-icon">📊</span>
+          <span>Tableau de bord</span>
+        </a>
+        <a class="nav-item" data-view="sales" onclick="App.navigateTo('sales')">
+          <span class="nav-icon">🛒</span>
+          <span>Ventes (POS)</span>
+        </a>
+        <a class="nav-item" data-view="products" onclick="App.navigateTo('products')">
+          <span class="nav-icon">📦</span>
+          <span>Produits & Stock</span>
+        </a>
+        <a class="nav-item" data-view="operations" onclick="App.navigateTo('operations')">
+          <span class="nav-icon">💸</span>
+          <span>Opérations</span>
+        </a>
+        <a class="nav-item" data-view="history" onclick="App.navigateTo('history')">
+          <span class="nav-icon">📑</span>
+          <span>Historique</span>
+        </a>
+        <a class="nav-item" data-view="clients" onclick="App.navigateTo('clients')">
+          <span class="nav-icon">👥</span>
+          <span>Clients & Dettes</span>
+        </a>
+        <a class="nav-item" data-view="stats" onclick="App.navigateTo('stats')">
+          <span class="nav-icon">📈</span>
+          <span>Statistiques</span>
+        </a>
+        <a class="nav-item" data-view="reports" onclick="App.navigateTo('reports')">
+          <span class="nav-icon">📄</span>
+          <span>Rapports & Exports</span>
+        </a>
+        <a class="nav-item" data-view="settings" onclick="App.navigateTo('settings')">
+          <span class="nav-icon">⚙️</span>
+          <span>Paramètres</span>
+        </a>
+        <a class="nav-item" data-view="about" onclick="App.navigateTo('about')">
+          <span class="nav-icon">ℹ️</span>
+          <span>À propos</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="business-mini-card">
+          <div class="business-avatar" id="sidebarShopAvatar">MC</div>
+          <div class="business-info">
+            <div class="business-name" id="sidebarShopName">Ma Caisse</div>
+            <div class="business-role" id="sidebarShopRole">Commerce Général</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Zone Centrale -->
+    <div class="main-wrapper">
+      
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Menu">☰</button>
+          <h1 class="page-title" id="pageTitle">Tableau de bord</h1>
+        </div>
+
+        <div class="topbar-search" onclick="App.openModal('modalGlobalSearch')">
+          <span class="topbar-search-icon">🔍</span>
+          <input type="text" placeholder="Rechercher (Ctrl+K)..." readonly style="cursor:pointer;">
+        </div>
+
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" onclick="App.navigateTo('sales')">+ Vente</button>
+          <button class="btn btn-secondary btn-sm" onclick="App.navigateTo('operations')">+ Opération</button>
+          <button class="btn btn-secondary btn-sm" id="btnInstallPwa" onclick="App.promptInstall()" style="display:none;">📲 Installer</button>
+        </div>
+      </header>
+
+      <!-- Contenu des Vues -->
+      <main class="page-container">
+
+        <!-- 1. VUE TABLEAU DE BORD -->
+        <section id="view-dashboard" class="view-section active">
+          <div class="section-header">
+            <div>
+              <h2>Vue d'ensemble</h2>
+              <p>Indicateurs clés et santé financière en temps réel</p>
+            </div>
+            <div class="section-controls">
+              <div class="filter-bar">
+                <button class="filter-btn period-btn" data-period="today" onclick="App.setPeriod('today')">Aujourd'hui</button>
+                <button class="filter-btn period-btn active" data-period="7days" onclick="App.setPeriod('7days')">7 jours</button>
+                <button class="filter-btn period-btn" data-period="30days" onclick="App.setPeriod('30days')">30 jours</button>
+                <button class="filter-btn period-btn" data-period="month" onclick="App.setPeriod('month')">Ce mois</button>
+                <button class="filter-btn period-btn" data-period="all" onclick="App.setPeriod('all')">Tout</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerte Stock Faible / Rupture -->
+          <div id="dashboardStockAlert" style="display:none; background:var(--warning-light); border:1px solid var(--warning-border); padding:14px 18px; border-radius:var(--radius-md); margin-bottom:20px; justify-content:space-between; align-items:center;">
+          </div>
+
+          <!-- Cartes Métriques (8 indicateurs conformes au cahier des charges) -->
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-header">
+                <span class="stat-label">Solde de Trésorerie</span>
+                <span class="stat-icon primary">💰</span>
+              </div>
+              <div class="stat-value" id="metricSolde">0 FCFA</div>
+              <div class="stat-sub">Entrées nettes - Dépenses</div>
+            </div>
+
+            <div class="stat-card success">
+              <div class="stat-header">
+                <span class="stat-label">Chiffre d'Affaires</span>
+                <span class="stat-icon success">📈</span>
+              </div>
+              <div class="stat-value" id="metricCA">0 FCFA</div>
+              <div class="stat-sub">Ventes sur la période</div>
+            </div>
+
+            <div class="stat-card danger">
+              <div class="stat-header">
+                <span class="stat-label">Dépenses Totales</span>
+                <span class="stat-icon danger">💸</span>
+              </div>
+              <div class="stat-value" id="metricDepenses">0 FCFA</div>
+              <div class="stat-sub">Sorties enregistrées</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-label">Coût Produits Vendus</span>
+                <span class="stat-icon">🏷️</span>
+              </div>
+              <div class="stat-value" id="metricCoutAchat">0 FCFA</div>
+              <div class="stat-sub">Coût d'achat des ventes</div>
+            </div>
+
+            <div class="stat-card success">
+              <div class="stat-header">
+                <span class="stat-label">Bénéfice Brut</span>
+                <span class="stat-icon success">✨</span>
+              </div>
+              <div class="stat-value" id="metricBenefBrut">0 FCFA</div>
+              <div class="stat-sub">CA - Coût d'achat</div>
+            </div>
+
+            <div class="stat-card warning">
+              <div class="stat-header">
+                <span class="stat-label">Charges d'Exploitation</span>
+                <span class="stat-icon warning">📉</span>
+              </div>
+              <div class="stat-value" id="metricCharges">0 FCFA</div>
+              <div class="stat-sub">Loyer, salaires, énergie...</div>
+            </div>
+
+            <div class="stat-card success">
+              <div class="stat-header">
+                <span class="stat-label">Bénéfice Estimé</span>
+                <span class="stat-icon success">🎯</span>
+              </div>
+              <div class="stat-value" id="metricBenefEstime">0 FCFA</div>
+              <div class="stat-sub">Bénéfice brut - Charges</div>
+            </div>
+
+            <div class="stat-card primary">
+              <div class="stat-header">
+                <span class="stat-label">Taux de Marge</span>
+                <span class="stat-icon primary">📊</span>
+              </div>
+              <div class="stat-value" id="metricMarge">0 %</div>
+              <div class="stat-sub">(Bénéfice brut / CA) × 100</div>
+            </div>
+          </div>
+
+          <!-- Graphiques du Tableau de bord -->
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-title">
+                <span>Évolution Ventes vs Dépenses</span>
+                <small style="color:var(--text-muted); font-size:12px;">Période sélectionnée</small>
+              </div>
+              <div id="dashboardSalesChart" class="chart-container"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">
+                <span>État des Stocks</span>
+              </div>
+              <div id="dashboardStockDonut" style="padding-top:10px;"></div>
+            </div>
+          </div>
+
+          <!-- Top Produits et Dernières Opérations -->
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-title">
+                <span>Top 5 des Produits les plus vendus</span>
+              </div>
+              <div id="dashboardTopProducts"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">
+                <span>Dernières Opérations Financières</span>
+                <button class="btn btn-sm btn-secondary" onclick="App.navigateTo('history')">Voir tout</button>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Libellé</th>
+                      <th style="text-align:right;">Montant</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardRecentOps"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. VUE OPÉRATIONS -->
+        <section id="view-operations" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Opérations de Caisse</h2>
+              <p>Enregistrez facilement vos recettes et vos dépenses courantes</p>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
+            <!-- Formulaire Entrée -->
+            <div class="card" style="border-top:4px solid var(--success);">
+              <h3 style="font-size:17px; font-weight:800; color:var(--success); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                <span>🟢</span> Enregistrer une Entrée d'argent
+              </h3>
+              <form onsubmit="App.handleRecordOperation('in', event)">
+                <div class="form-group">
+                  <label for="opInAmount">Montant reçu</label>
+                  <input type="number" id="opInAmount" class="form-control" placeholder="Ex: 25000" min="1" step="any" required>
+                </div>
+                <div class="form-group">
+                  <label for="opInCat">Catégorie</label>
+                  <select id="opInCat" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                  <label for="opInDate">Date de l'opération</label>
+                  <input type="date" id="opInDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="opInDesc">Description / Motif</label>
+                  <input type="text" id="opInDesc" class="form-control" placeholder="Ex: Encaissement divers, prestation...">
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%;">Valider l'Entrée</button>
+              </form>
+            </div>
+
+            <!-- Formulaire Dépense -->
+            <div class="card" style="border-top:4px solid var(--danger);">
+              <h3 style="font-size:17px; font-weight:800; color:var(--danger); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                <span>🔴</span> Enregistrer une Dépense (Sortie)
+              </h3>
+              <form onsubmit="App.handleRecordOperation('out', event)">
+                <div class="form-group">
+                  <label for="opOutAmount">Montant décaissé</label>
+                  <input type="number" id="opOutAmount" class="form-control" placeholder="Ex: 5000" min="1" step="any" required>
+                </div>
+                <div class="form-group">
+                  <label for="opOutCat">Catégorie de charge</label>
+                  <select id="opOutCat" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                  <label for="opOutDate">Date de l'opération</label>
+                  <input type="date" id="opOutDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="opOutDesc">Description / Justification</label>
+                  <input type="text" id="opOutDesc" class="form-control" placeholder="Ex: Paiement facture électricité, transport...">
+                </div>
+                <button type="submit" class="btn btn-danger" style="width:100%;">Valider la Dépense</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. VUE HISTORIQUE -->
+        <section id="view-history" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Historique des Opérations</h2>
+              <p>Journal complet de tous les mouvements financiers</p>
+            </div>
+            <div class="section-controls">
+              <button class="btn btn-secondary btn-sm" onclick="Exports.exportToExcel('operations')">📊 Exporter Excel</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:20px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <input type="text" id="historySearch" class="form-control" placeholder="Rechercher par description, montant..." style="flex:2; min-width:200px;" oninput="App.renderHistory()">
+              <select id="historyTypeFilter" class="form-control" style="flex:1; min-width:140px;" onchange="App.renderHistory()">
+                <option value="all">Tous types</option>
+                <option value="in">Entrées uniquement</option>
+                <option value="out">Dépenses uniquement</option>
+              </select>
+              <select id="historyCatFilter" class="form-control" style="flex:1; min-width:160px;" onchange="App.renderHistory()">
+                <option value="all">Toutes catégories</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date & Heure</th>
+                  <th>Type</th>
+                  <th>Catégorie</th>
+                  <th>Description</th>
+                  <th style="text-align:right;">Montant</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. VUE PRODUITS & STOCK -->
+        <section id="view-products" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Gestion des Produits & Stock</h2>
+              <p>Catalogue, contrôle des seuils de stock et suivi des marges unitaires</p>
+            </div>
+            <div class="section-controls">
+              <button class="btn btn-secondary btn-sm" onclick="Exports.exportToExcel('products')">📊 Exporter Catalogue</button>
+              <button class="btn btn-primary" onclick="App.openAddProductModal()">+ Nouveau Produit</button>
+            </div>
+          </div>
+
+          <!-- Section Produits à réapprovisionner -->
+          <div class="card" style="margin-bottom:20px; border-left:4px solid var(--warning);">
+            <div class="card-title">
+              <span>⚠️ Alertes de Réapprovisionnement</span>
+              <small style="font-size:12px; color:var(--text-muted);">Stock ≤ Seuil minimum</small>
+            </div>
+            <div id="lowStockList"></div>
+          </div>
+
+          <!-- Filtres catalogue -->
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <input type="text" id="productSearch" class="form-control" placeholder="Rechercher produit ou référence..." style="flex:2; min-width:200px;" oninput="App.renderProducts()">
+              <select id="productCatFilter" class="form-control" style="flex:1; min-width:160px;" onchange="App.renderProducts()">
+                <option value="all">Toutes les catégories</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Produit & Réf</th>
+                  <th>Catégorie</th>
+                  <th>Prix Achat</th>
+                  <th>Prix Vente</th>
+                  <th>Marge Unitaire</th>
+                  <th>Stock Actuel</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 5. VUE VENTES (POS) -->
+        <section id="view-sales" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Enregistrement des Ventes</h2>
+              <p>Interface de vente rapide avec décrémentation automatique du stock et contrôle strict</p>
+            </div>
+            <div class="section-controls">
+              <button class="btn btn-secondary btn-sm" onclick="Exports.exportToExcel('sales')">📊 Exporter Ventes</button>
+              <button class="btn btn-secondary btn-sm" onclick="Exports.printReport('sales')">🖨️ Imprimer Rapport</button>
+            </div>
+          </div>
+
+          <div class="pos-layout">
+            <!-- Grille de Produits Disponibles -->
+            <div>
+              <div class="card" style="margin-bottom:16px;">
+                <div style="font-weight:700; margin-bottom:10px;">Cliquez sur un produit pour l'ajouter à la vente :</div>
+                <div id="posProductPicker" class="product-picker-grid"></div>
+              </div>
+
+              <!-- Historique récent des ventes -->
+              <div class="card">
+                <div class="card-title">
+                  <span>Historique Récent des Ventes</span>
+                </div>
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Produit</th>
+                        <th style="text-align:center;">Qté</th>
+                        <th>Total</th>
+                        <th>Bénéfice</th>
+                        <th>Client</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="salesTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panneau de Caisse / Vente en cours -->
+            <div>
+              <div class="card" style="position:sticky; top:86px; border:2px solid var(--primary-border);">
+                <div class="card-title">
+                  <span>Caisse & Règlements</span>
+                  <span class="badge badge-primary">Vente directe</span>
+                </div>
+
+                <form onsubmit="App.submitPosSale(event)">
+                  <input type="hidden" id="posProductId">
+
+                  <div style="background:var(--bg-muted); padding:14px; border-radius:var(--radius-md); margin-bottom:16px;">
+                    <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Produit sélectionné :</div>
+                    <div id="posProductNameDisplay" style="font-size:16px; font-weight:800; color:var(--text-main); margin-top:2px;">Aucun produit sélectionné</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:13px;">
+                      <span id="posProductAvailableStock" style="color:var(--text-muted);">-</span>
+                      <span id="posUnitPriceDisplay" style="font-weight:700; color:var(--primary);">-</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="posQty">Quantité à vendre</label>
+                    <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="App.recalcPosTotal()" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="posClientSelect">Client (Facultatif)</label>
+                    <select id="posClientSelect" class="form-control"></select>
+                  </div>
+
+                  <!-- Type de Règlement (Comptant, Crédit, Partiel) -->
+                  <div class="form-group">
+                    <label>Mode de Règlement</label>
+                    <div style="display:flex; gap:12px; margin-top:6px; font-size:13px; font-weight:600;">
+                      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="posPaymentType" value="full" checked onchange="App.handlePosPaymentTypeChange('full')"> Comptant (Total)
+                      </label>
+                      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="posPaymentType" value="partial" onchange="App.handlePosPaymentTypeChange('partial')"> Partiel
+                      </label>
+                      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="posPaymentType" value="credit" onchange="App.handlePosPaymentTypeChange('credit')"> À crédit
+                      </label>
+                    </div>
+                  </div>
+
+                  <div id="posPartialPaidWrapper" class="form-group" style="display:none;">
+                    <label for="posPartialPaidAmount">Montant encaissé immédiatement</label>
+                    <input type="number" id="posPartialPaidAmount" class="form-control" placeholder="Montant payé...">
+                    <div class="form-hint">Le reste sera automatiquement ajouté à la dette du client.</div>
+                  </div>
+
+                  <!-- Récapitulatif Financier Vente -->
+                  <div style="border-top:1px dashed var(--border); border-bottom:1px dashed var(--border); padding:14px 0; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                      <span>Bénéfice estimé :</span>
+                      <strong id="posProfitDisplay" style="color:var(--success);">-</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:800; color:var(--text-main);">
+                      <span>TOTAL :</span>
+                      <span id="posTotalAmountDisplay" style="color:var(--primary);">0 FCFA</span>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" style="width:100%; font-size:16px; padding:12px;">
+                    ✓ Valider la Vente
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. VUE CLIENTS & DETTES -->
+        <section id="view-clients" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Clients & Dettes</h2>
+              <p>Suivi des clients fidèles, créances en cours et enregistrement des remboursements</p>
+            </div>
+            <div class="section-controls">
+              <button class="btn btn-secondary btn-sm" onclick="Exports.exportToExcel('clients')">📊 Exporter Clients</button>
+              <button class="btn btn-primary" onclick="App.openAddClientModal()">+ Nouveau Client</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:var(--danger-light); border-color:var(--danger-border);">
+            <div>
+              <span style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--danger);">Total Dettes Clients en cours :</span>
+              <div id="clientsTotalDebtSummary" style="font-size:24px; font-weight:800; color:var(--danger);">0 FCFA</div>
+            </div>
+            <div style="font-size:13px; color:var(--text-muted);">
+              Une gestion rigoureuse des créances préserve votre trésorerie.
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px;">
+            <input type="text" id="clientSearch" class="form-control" placeholder="Rechercher client par nom ou téléphone..." oninput="App.renderClients()">
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nom du Client</th>
+                  <th>Téléphone</th>
+                  <th>Dette Actuelle</th>
+                  <th>Total Achats</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clientsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7. VUE STATISTIQUES -->
+        <section id="view-stats" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Statistiques & Analyses</h2>
+              <p>Rapports détaillés de performance commerciale</p>
+            </div>
+            <div class="section-controls">
+              <select id="statsPeriodFilter" class="form-control" style="width:160px;" onchange="App.renderStats()">
+                <option value="today">Aujourd'hui</option>
+                <option value="7days">7 derniers jours</option>
+                <option value="30days" selected>30 derniers jours</option>
+                <option value="month">Ce mois-ci</option>
+                <option value="all">Tout l'historique</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-label">Chiffre d'Affaires</div>
+              <div class="stat-value" id="statCA">0 FCFA</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-label">Dépenses Enregistrées</div>
+              <div class="stat-value" id="statDepenses">0 FCFA</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-label">Bénéfice Brut</div>
+              <div class="stat-value" id="statBenefBrut">0 FCFA</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-label">Bénéfice Estimé</div>
+              <div class="stat-value" id="statBenefEstime">0 FCFA</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Taux de Marge %</div>
+              <div class="stat-value" id="statMarge">0 %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Nombre de Ventes</div>
+              <div class="stat-value" id="statSalesCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Articles Vendus</div>
+              <div class="stat-value" id="statItemsSold">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Valeur Stock (Achat)</div>
+              <div class="stat-value" id="statStockValue">0 FCFA</div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-title">Évolution des Flux</div>
+              <div id="statsTrendChart" class="chart-container"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Classement des Ventes</div>
+              <div id="statsTopProducts"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. VUE RAPPORTS & EXPORTS -->
+        <section id="view-reports" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Rapports & Exports</h2>
+              <p>Générez vos rapports de gestion commerciale et téléchargez vos données</p>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:24px;">
+            <!-- Rapport Ventes -->
+            <div class="card">
+              <h3 style="font-size:16px; font-weight:800; margin-bottom:10px;">📊 Rapport des Ventes</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+                Historique complet avec prix d'achat, prix de vente, bénéfices dégagés et clients associés.
+              </p>
+              <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="Exports.exportToExcel('sales')">Exporter Excel (.csv)</button>
+                <button class="btn btn-secondary btn-sm" onclick="Exports.printReport('sales')">Imprimer PDF</button>
+              </div>
+            </div>
+
+            <!-- Rapport Financier -->
+            <div class="card">
+              <h3 style="font-size:16px; font-weight:800; margin-bottom:10px;">💰 Rapport Financier</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+                Synthèse des recettes, dépenses, charges d'exploitation et marges nettes.
+              </p>
+              <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="Exports.exportToExcel('operations')">Exporter Opérations</button>
+                <button class="btn btn-secondary btn-sm" onclick="Exports.printReport('financial')">Imprimer Bilan</button>
+              </div>
+            </div>
+
+            <!-- Rapport de Stock -->
+            <div class="card">
+              <h3 style="font-size:16px; font-weight:800; margin-bottom:10px;">📦 Rapport d'Inventaire</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+                Valorisation globale du stock au prix d'achat et au prix de vente prévisionnel.
+              </p>
+              <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="Exports.exportToExcel('products')">Exporter Stock</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tableau récapitulatif -->
+          <div class="card">
+            <div class="card-title">
+              <span>Synthèse Globale de l'Activité</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Total Ventes Cumulées</div>
+                <div style="font-size:18px; font-weight:800; color:var(--primary);" id="repTotalSales">0 FCFA</div>
+              </div>
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Coût d'Achat Marchandises</div>
+                <div style="font-size:18px; font-weight:800;" id="repTotalPurchases">0 FCFA</div>
+              </div>
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Bénéfice Brut Total</div>
+                <div style="font-size:18px; font-weight:800; color:var(--success);" id="repGrossProfit">0 FCFA</div>
+              </div>
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Valeur Stock à l'Achat</div>
+                <div style="font-size:18px; font-weight:800;" id="repStockBuyVal">0 FCFA</div>
+              </div>
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Valeur Stock à la Vente</div>
+                <div style="font-size:18px; font-weight:800; color:var(--primary);" id="repStockSellVal">0 FCFA</div>
+              </div>
+              <div style="padding:14px; background:var(--bg-muted); border-radius:8px;">
+                <div style="font-size:12px; color:var(--text-muted);">Dettes Clients à Recouvrer</div>
+                <div style="font-size:18px; font-weight:800; color:var(--danger);" id="repTotalDebt">0 FCFA</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. VUE PARAMÈTRES -->
+        <section id="view-settings" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>Paramètres & Sauvegardes</h2>
+              <p>Personnalisation de la boutique et gestion des données locales</p>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
+            <!-- Paramètres Boutique -->
+            <div class="card">
+              <h3 style="font-size:17px; font-weight:800; margin-bottom:16px;">🏪 Identité du Commerce</h3>
+              <form onsubmit="App.saveSettingsSubmit(event)">
+                <div class="form-group">
+                  <label for="setShopName">Nom du commerce</label>
+                  <input type="text" id="setShopName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="setDescription">Secteur / Description</label>
+                  <input type="text" id="setDescription" class="form-control">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="setPhone">Téléphone</label>
+                    <input type="text" id="setPhone" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label for="setCurrency">Devise</label>
+                    <select id="setCurrency" class="form-control">
+                      <option value="FCFA">FCFA</option>
+                      <option value="EUR">€ (Euro)</option>
+                      <option value="USD">$ (Dollar US)</option>
+                      <option value="CDF">CDF (Franc Congolais)</option>
+                      <option value="GNF">GNF (Franc Guinéen)</option>
+                      <option value="MGA">MGA (Ariary)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="setAddress">Adresse physique</label>
+                  <input type="text" id="setAddress" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Enregistrer les modifications</button>
+              </form>
+            </div>
+
+            <!-- Sauvegarde & Restauration -->
+            <div class="card">
+              <h3 style="font-size:17px; font-weight:800; margin-bottom:16px;">💾 Sécurité & Données</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+                Toutes vos données sont stockées localement dans votre appareil (hors connexion). Exportez régulièrement une sauvegarde de sécurité.
+              </p>
+
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <button class="btn btn-primary" onclick="Exports.exportBackup()">
+                  📥 Sauvegarder mes données (JSON)
+                </button>
+
+                <div style="position:relative;">
+                  <button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById('backupFileInput').click()">
+                    📤 Restaurer une sauvegarde (JSON)
+                  </button>
+                  <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="Exports.restoreBackup(this.files[0], () => { App.showToast('Sauvegarde restaurée avec succès !', 'success'); App.renderCurrentView(); }, (err) => App.showToast(err, 'danger'))">
+                </div>
+
+                <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+
+                <button class="btn btn-secondary" onclick="App.loadDemoDataConfirm()">
+                  ✨ Charger les données de démonstration
+                </button>
+
+                <button class="btn btn-outline-danger" onclick="App.resetAllDataConfirm()">
+                  🗑️ Réinitialiser toutes les données
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. VUE À PROPOS -->
+        <section id="view-about" class="view-section">
+          <div class="section-header">
+            <div>
+              <h2>À propos de MA CAISSE</h2>
+              <p>Solution numérique de gestion de commerce</p>
+            </div>
+          </div>
+
+          <div class="card" style="max-width:760px; margin:0 auto; padding:32px;">
+            <div style="text-align:center; margin-bottom:24px;">
+              <div style="width:72px; height:72px; background:linear-gradient(135deg, #4F46E5 0%, #3730A3 100%); border-radius:20px; display:inline-flex; align-items:center; justify-content:center; color:#FFFFFF; font-size:32px; font-weight:800; box-shadow:0 8px 20px rgba(79, 70, 229, 0.3); margin-bottom:12px;">
+                MC
+              </div>
+              <h2 style="font-size:26px; font-weight:800;">MA CAISSE V1.4</h2>
+              <p style="color:var(--primary); font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px;">
+                Solution numérique de gestion de commerce
+              </p>
+            </div>
+
+            <div style="background:var(--bg-muted); padding:20px; border-radius:12px; margin-bottom:24px;">
+              <h3 style="font-size:16px; font-weight:800; margin-bottom:8px;">👤 Porteur du projet</h3>
+              <p style="font-size:16px; font-weight:800; color:var(--text-main); margin-bottom:4px;">GASTON N3</p>
+              <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+                Entrepreneur et concepteur de solutions numériques simplifiées adaptées aux réalités économiques des commerçants de proximité et des PME.
+              </p>
+            </div>
+
+            <h3 style="font-size:16px; font-weight:800; margin-bottom:12px;">🎯 Points forts & Technologies</h3>
+            <ul style="padding-left:20px; font-size:14px; color:var(--text-muted); line-height:1.8; margin-bottom:24px;">
+              <li><strong>100% Autonome & Hors Connexion :</strong> Fonctionne sans connexion Internet grâce au Service Worker et au stockage local.</li>
+              <li><strong>Calculs Commerciaux Automatisés :</strong> Chiffre d'affaires, coût d'achat, marge unitaire, bénéfice brut et bénéfice estimé.</li>
+              <li><strong>Contrôle Rigoureux des Stocks :</strong> Impossible de vendre plus que le stock disponible ; alertes de réapprovisionnement proactives.</li>
+              <li><strong>Suivi des Créances Clients :</strong> Gestion des ventes à crédit et comptabilisation automatique des règlements.</li>
+              <li><strong>Exports Universels :</strong> Rapports tabulaires compatibles Excel (.csv) et impression directe de rapports format A4 / PDF.</li>
+            </ul>
+
+            <div style="border-top:1px solid var(--border); padding-top:16px; text-align:center; font-size:12px; color:var(--text-muted);">
+              Version 1.4 • Septembre 2026 • Développé pour ordinateur, tablette et smartphone
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALES DE L'APPLICATION -->
+
+  <!-- Modale Produit (Ajout / Édition) -->
+  <div class="modal-overlay" id="modalProduct">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="productModalTitle">Ajouter un Produit</h3>
+        <button class="modal-close" onclick="App.closeModal('modalProduct')">✕</button>
+      </div>
+      <form onsubmit="App.saveProductSubmit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="productIdEdit">
+          <div class="form-group">
+            <label for="prodName">Nom du produit *</label>
+            <input type="text" id="prodName" class="form-control" placeholder="Ex: Sac de Riz 25kg" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodRef">Référence *</label>
+              <input type="text" id="prodRef" class="form-control" placeholder="Ex: REF-001">
+            </div>
+            <div class="form-group">
+              <label for="prodCategory">Catégorie</label>
+              <select id="prodCategory" class="form-control">
+                <option value="Alimentation">Alimentation</option>
+                <option value="Boissons">Boissons</option>
+                <option value="Hygiène & Beauté">Hygiène & Beauté</option>
+                <option value="Maison & Entretien">Maison & Entretien</option>
+                <option value="Fournitures">Fournitures</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodBuyPrice">Prix d'achat unitaire</label>
+              <input type="number" id="prodBuyPrice" class="form-control" placeholder="Ex: 15000" min="0" step="any">
+            </div>
+            <div class="form-group">
+              <label for="prodSellPrice">Prix de vente unitaire *</label>
+              <input type="number" id="prodSellPrice" class="form-control" placeholder="Ex: 18500" min="0" step="any" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodStock">Stock initial *</label>
+              <input type="number" id="prodStock" class="form-control" value="0" min="0" required>
+            </div>
+            <div class="form-group">
+              <label for="prodMinStock">Seuil stock minimum *</label>
+              <input type="number" id="prodMinStock" class="form-control" value="5" min="0" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalProduct')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer le Produit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Réapprovisionnement Stock -->
+  <div class="modal-overlay" id="modalRestock">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Réapprovisionner le Stock</h3>
+        <button class="modal-close" onclick="App.closeModal('modalRestock')">✕</button>
+      </div>
+      <form onsubmit="App.submitRestock(event)">
+        <div class="modal-body">
+          <input type="hidden" id="restockProdId">
+          <div style="background:var(--bg-muted); padding:12px; border-radius:8px; margin-bottom:16px;">
+            <div style="font-weight:700;" id="restockProdName">-</div>
+            <div style="font-size:12px; color:var(--text-muted);">Stock actuel : <span id="restockCurrentStock">0</span></div>
+          </div>
+          <div class="form-group">
+            <label for="restockQty">Quantité ajoutée *</label>
+            <input type="number" id="restockQty" class="form-control" min="1" value="10" required>
+          </div>
+          <div class="form-group">
+            <label for="restockUnitCost">Prix d'achat unitaire (nouveau coût)</label>
+            <input type="number" id="restockUnitCost" class="form-control" min="0" step="any">
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="restockRecordExpense" checked>
+              Enregistrer automatiquement cette dépense dans les opérations de caisse
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalRestock')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Valider l'Approvisionnement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Client (Ajout / Édition) -->
+  <div class="modal-overlay" id="modalClient">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="clientModalTitle">Nouveau Client</h3>
+        <button class="modal-close" onclick="App.closeModal('modalClient')">✕</button>
+      </div>
+      <form onsubmit="App.saveClientSubmit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="clientIdEdit">
+          <div class="form-group">
+            <label for="clientName">Nom complet *</label>
+            <input type="text" id="clientName" class="form-control" placeholder="Ex: Jean Dupont" required>
+          </div>
+          <div class="form-group">
+            <label for="clientPhone">Numéro de téléphone</label>
+            <input type="tel" id="clientPhone" class="form-control" placeholder="Ex: +242 06 123 45 67">
+          </div>
+          <div class="form-group">
+            <label for="clientInitialDebt">Dette initiale (si existante)</label>
+            <input type="number" id="clientInitialDebt" class="form-control" value="0" min="0" step="any">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalClient')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer Client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Enregistrement Paiement Dette Client -->
+  <div class="modal-overlay" id="modalRepayDebt">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Enregistrer un Règlement de Dette</h3>
+        <button class="modal-close" onclick="App.closeModal('modalRepayDebt')">✕</button>
+      </div>
+      <form onsubmit="App.submitRepayDebt(event)">
+        <div class="modal-body">
+          <input type="hidden" id="repayClientId">
+          <div style="background:var(--bg-muted); padding:14px; border-radius:8px; margin-bottom:16px;">
+            <div style="font-weight:700; font-size:15px;" id="repayClientName">-</div>
+            <div style="font-size:13px; color:var(--danger); font-weight:700; margin-top:2px;">
+              Dette actuelle : <span id="repayCurrentDebt">0 FCFA</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="repayAmount">Montant remboursé *</label>
+            <input type="number" id="repayAmount" class="form-control" min="1" step="any" required>
+            <div class="form-hint">Le paiement sera automatiquement crédité dans les entrées de caisse.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalRepayDebt')">Annuler</button>
+          <button type="submit" class="btn btn-success">Valider l'Encaissement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Fiche Client Détaillée -->
+  <div class="modal-overlay" id="modalClientCard">
+    <div class="modal-content" style="max-width:620px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Fiche Client</h3>
+        <button class="modal-close" onclick="App.closeModal('modalClientCard')">✕</button>
+      </div>
+      <div class="modal-body" id="clientCardDetails"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalClientCard')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Ticket de Caisse / Reçu -->
+  <div class="modal-overlay" id="modalReceipt">
+    <div class="modal-content" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Ticket de Caisse</h3>
+        <button class="modal-close" onclick="App.closeModal('modalReceipt')">✕</button>
+      </div>
+      <div class="modal-body" id="receiptContent"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modalReceipt')">Fermer</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Imprimer le Reçu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Recherche Globale -->
+  <div class="modal-overlay" id="modalGlobalSearch">
+    <div class="modal-content" style="max-width:580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Recherche Globale</h3>
+        <button class="modal-close" onclick="App.closeModal('modalGlobalSearch')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="globalSearchInput" class="form-control" placeholder="Rechercher produit, client, vente, opération..." oninput="App.handleGlobalSearch(this.value)">
+        <div id="globalSearchResults" class="search-palette-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Écran de Première Configuration (Onboarding) -->
+  <div id="onboardingModal" class="onboarding-screen" style="display:none;">
+    <div class="onboarding-card">
+      <div style="width:60px; height:60px; background:linear-gradient(135deg, #4F46E5 0%, #3730A3 100%); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; color:#FFFFFF; font-size:24px; font-weight:800; margin-bottom:16px;">
+        MC
+      </div>
+      <h2 style="font-size:24px; font-weight:800; margin-bottom:6px;">Bienvenue sur MA CAISSE</h2>
+      <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;">
+        Configurez votre commerce en quelques secondes pour démarrer votre gestion.
+      </p>
+
+      <form onsubmit="App.saveOnboarding(event)">
+        <div class="form-group" style="text-align:left;">
+          <label for="onboardShopName">Nom de votre commerce *</label>
+          <input type="text" id="onboardShopName" class="form-control" placeholder="Ex: Épicerie Chez Gaston" required>
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label for="onboardDescription">Activité principale</label>
+          <input type="text" id="onboardDescription" class="form-control" placeholder="Ex: Alimentation générale, quincaillerie...">
+        </div>
+        <div class="form-row" style="text-align:left;">
+          <div class="form-group">
+            <label for="onboardPhone">Téléphone</label>
+            <input type="tel" id="onboardPhone" class="form-control" placeholder="Ex: 06 123 45 67">
+          </div>
+          <div class="form-group">
+            <label for="onboardCurrency">Devise</label>
+            <select id="onboardCurrency" class="form-control">
+              <option value="FCFA">FCFA</option>
+              <option value="EUR">€ (Euro)</option>
+              <option value="USD">$ (Dollar)</option>
+              <option value="CDF">CDF (Franc Congolais)</option>
+              <option value="GNF">GNF (Franc Guinéen)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label for="onboardAddress">Adresse</label>
+          <input type="text" id="onboardAddress" class="form-control" placeholder="Ex: Marché Central, Brazzaville">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; font-size:16px; padding:12px; margin-top:8px;">
+          Commencer 🚀
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Conteneur Toasts -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts JavaScript modulaires -->
+  <script src="js/store.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/exports.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

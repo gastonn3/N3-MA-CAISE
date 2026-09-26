@@ -1,0 +1,6 @@
+{
+  "name": "Ma Caisse",
+  "description": "Solution numérique de gestion de commerce pour petits commerçants et entrepreneurs par GASTON N3",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
